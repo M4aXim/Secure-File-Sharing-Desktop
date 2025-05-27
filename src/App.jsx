@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
+import Dashboard from "./Dashboard";
 
 function App() {
   const [activeForm, setActiveForm] = useState(null);
@@ -8,6 +10,7 @@ function App() {
   const [showMfaField, setShowMfaField] = useState(false);
   const [mfaToken, setMfaToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Check for Google OAuth token in URL
@@ -16,6 +19,12 @@ function App() {
     
     if (token) {
       handleGoogleLoginSuccess(token);
+    }
+
+    // Check if user is already authenticated
+    const storedToken = localStorage.getItem('jwtToken');
+    if (storedToken) {
+      setIsAuthenticated(true);
     }
   }, []);
 
@@ -105,9 +114,7 @@ function App() {
       if (data.token) {
         localStorage.setItem('jwtToken', data.token);
         showNotification('Login successful! Redirecting...', 'is-success');
-        setTimeout(() => {
-          window.location.href = '/dashboard/dashboard.html';
-        }, 1500);
+        setIsAuthenticated(true);
       } else if (data.error === 'MFA token required') {
         setShowMfaField(true);
         showNotification('Please enter your authentication code', 'is-info');
@@ -185,10 +192,7 @@ function App() {
           localStorage.setItem('userRole', payload.role);
           
           console.log('Logged in as:', payload.username, 'with role:', payload.role);
-          
-          setTimeout(() => {
-            window.location.href = '/dashboard/dashboard.html';
-          }, 1500);
+          setIsAuthenticated(true);
         } catch (e) {
           console.error('Error decoding token:', e);
           showNotification('Error processing login. Please try again.', 'is-danger');
@@ -273,10 +277,7 @@ function App() {
         }
         
         showNotification('Login successful! Redirecting...', 'is-success');
-        
-        setTimeout(() => {
-          window.location.href = '/dashboard/dashboard.html';
-        }, 1500);
+        setIsAuthenticated(true);
       } else {
         showNotification(data.error || 'Invalid one-time password', 'is-danger');
       }
@@ -292,311 +293,320 @@ function App() {
   };
 
   return (
-    <>
-      <section className="section py-6">
-        <div className="container">
-          {/* Hero Section */}
-          <div className="hero p-5 mb-6">
-            <div className="hero-body">
-              <div className="columns is-vcentered">
-                <div className="column">
-                  <h1 className="title is-2 has-text-primary">
-                    <i className="fas fa-cloud-upload-alt mr-2"></i>FileShare
-                  </h1>
-                  <p className="subtitle is-4 mt-3">Secure and simple file sharing for everyone</p>
-                  <p className="is-size-5 mt-4 has-text-grey">
-                    Share files with ease, access from anywhere, and keep your data secure.
-                  </p>
-                  <div className="buttons mt-5">
-                    <button className="button is-primary is-medium px-5" onClick={() => showForm('login')}>
-                      <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
-                      <span>Login</span>
-                    </button>
-                    <button className="button is-link is-medium px-5" onClick={() => showForm('register')}>
-                      <span className="icon"><i className="fas fa-user-plus"></i></span>
-                      <span>Create Account</span>
-                    </button>
-                    <a href="https://hackclub.maksimmalbasa.in.rs/law.html" className="button is-danger is-medium px-5">
-                      <span className="icon"><i className="fas fa-gavel"></i></span>
-                      <span>Law Enforcement</span>
-                    </a>
-                  </div>
-                </div>
-                <div className="column is-hidden-mobile">
-                  <img src="https://hackclub.maksimmalbasa.in.rs/assets/Picture.png" alt="File sharing illustration" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Login Form */}
-          {activeForm === 'login' && (
-            <div className="form-card p-5">
-              <h2 className="title is-4 has-text-centered">Welcome Back</h2>
-              <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Log in to access your files</p>
-              
-              <form onSubmit={handleLogin}>
-                <div className="field">
-                  <label className="label">Username</label>
-                  <div className="control has-icons-left">
-                    <input className="input" type="text" name="username" placeholder="Enter your username" required />
-                    <span className="icon is-small is-left field-icon">
-                      <i className="fas fa-user"></i>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="field">
-                  <label className="label">Password</label>
-                  <div className="control has-icons-left">
-                    <input className="input" type="password" name="password" placeholder="Enter your password" required />
-                    <span className="icon is-small is-left field-icon">
-                      <i className="fas fa-lock"></i>
-                    </span>
-                  </div>
-                  <p className="help has-text-right">
-                    <button className="button is-text is-small" type="button" onClick={handleForgotPassword}>
-                      Forgot Password?
-                    </button>
-                  </p>
-                </div>
-
-                {showMfaField && (
-                  <div className="field">
-                    <label className="label">Authentication Code</label>
-                    <div className="control has-icons-left">
-                      <input
-                        className="input"
-                        type="text"
-                        name="mfaToken"
-                        placeholder="Enter 6-digit code"
-                        maxLength="6"
-                        value={mfaToken}
-                        onChange={(e) => setMfaToken(e.target.value)}
-                        required
-                      />
-                      <span className="icon is-small is-left field-icon">
-                        <i className="fas fa-shield-alt"></i>
-                      </span>
+    <Router>
+      <Routes>
+        <Route path="/dashboard" element={
+          isAuthenticated ? <Dashboard /> : <Navigate to="/" replace />
+        } />
+        <Route path="/" element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : (
+            <section className="section py-6">
+              <div className="container">
+                {/* Hero Section */}
+                <div className="hero p-5 mb-6">
+                  <div className="hero-body">
+                    <div className="columns is-vcentered">
+                      <div className="column">
+                        <h1 className="title is-2 has-text-primary">
+                          <i className="fas fa-cloud-upload-alt mr-2"></i>FileShare
+                        </h1>
+                        <p className="subtitle is-4 mt-3">Secure and simple file sharing for everyone</p>
+                        <p className="is-size-5 mt-4 has-text-grey">
+                          Share files with ease, access from anywhere, and keep your data secure.
+                        </p>
+                        <div className="buttons mt-5">
+                          <button className="button is-primary is-medium px-5" onClick={() => showForm('login')}>
+                            <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
+                            <span>Login</span>
+                          </button>
+                          <button className="button is-link is-medium px-5" onClick={() => showForm('register')}>
+                            <span className="icon"><i className="fas fa-user-plus"></i></span>
+                            <span>Create Account</span>
+                          </button>
+                          <a href="https://hackclub.maksimmalbasa.in.rs/law.html" className="button is-danger is-medium px-5">
+                            <span className="icon"><i className="fas fa-gavel"></i></span>
+                            <span>Law Enforcement</span>
+                          </a>
+                        </div>
+                      </div>
+                      <div className="column is-hidden-mobile">
+                        <img src="https://hackclub.maksimmalbasa.in.rs/assets/Picture.png" alt="File sharing illustration" />
+                      </div>
                     </div>
-                    <p className="help">Enter the verification code from your authenticator app</p>
+                  </div>
+                </div>
+
+                {/* Login Form */}
+                {activeForm === 'login' && (
+                  <div className="form-card p-5">
+                    <h2 className="title is-4 has-text-centered">Welcome Back</h2>
+                    <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Log in to access your files</p>
+                    
+                    <form onSubmit={handleLogin}>
+                      <div className="field">
+                        <label className="label">Username</label>
+                        <div className="control has-icons-left">
+                          <input className="input" type="text" name="username" placeholder="Enter your username" required />
+                          <span className="icon is-small is-left field-icon">
+                            <i className="fas fa-user"></i>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="field">
+                        <label className="label">Password</label>
+                        <div className="control has-icons-left">
+                          <input className="input" type="password" name="password" placeholder="Enter your password" required />
+                          <span className="icon is-small is-left field-icon">
+                            <i className="fas fa-lock"></i>
+                          </span>
+                        </div>
+                        <p className="help has-text-right">
+                          <button className="button is-text is-small" type="button" onClick={handleForgotPassword}>
+                            Forgot Password?
+                          </button>
+                        </p>
+                      </div>
+
+                      {showMfaField && (
+                        <div className="field">
+                          <label className="label">Authentication Code</label>
+                          <div className="control has-icons-left">
+                            <input
+                              className="input"
+                              type="text"
+                              name="mfaToken"
+                              placeholder="Enter 6-digit code"
+                              maxLength="6"
+                              value={mfaToken}
+                              onChange={(e) => setMfaToken(e.target.value)}
+                              required
+                            />
+                            <span className="icon is-small is-left field-icon">
+                              <i className="fas fa-shield-alt"></i>
+                            </span>
+                          </div>
+                          <p className="help">Enter the verification code from your authenticator app</p>
+                        </div>
+                      )}
+
+                      <div className="field mt-5">
+                        <div className="control">
+                          <button className="button is-primary is-fullwidth" type="submit">
+                            <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
+                            <span>Login</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="field mt-4">
+                        <div className="control">
+                        </div>
+                      </div>
+                      
+                      <div className="has-text-centered mt-3">
+                        <button className="button is-text is-small" type="button" onClick={() => showForm('otp-login')}>
+                          <span className="icon"><i className="fas fa-key"></i></span>
+                          <span>Login with One-Time Password</span>
+                        </button>
+                      </div>
+                      
+                      <p className="form-note mt-4">
+                        Don't have an account? <a href="#" onClick={() => showForm('register')}>Register here</a>
+                      </p>
+                    </form>
                   </div>
                 )}
 
-                <div className="field mt-5">
-                  <div className="control">
-                    <button className="button is-primary is-fullwidth" type="submit">
-                      <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
-                      <span>Login</span>
-                    </button>
-                  </div>
-                </div>
+                {/* Register Form */}
+                {activeForm === 'register' && (
+                  <div className="form-card p-5">
+                    <h2 className="title is-4 has-text-centered">Create an Account</h2>
+                    <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Join our secure file sharing platform</p>
+                    
+                    <form onSubmit={handleRegister}>
+                      <div className="field">
+                        <label className="label">Username</label>
+                        <div className="control has-icons-left">
+                          <input className="input" type="text" name="username" placeholder="Choose a username" required />
+                          <span className="icon is-small is-left field-icon">
+                            <i className="fas fa-user"></i>
+                          </span>
+                        </div>
+                      </div>
 
-                <div className="field mt-4">
-                  <div className="control">
-                  </div>
-                </div>
-                
-                <div className="has-text-centered mt-3">
-                  <button className="button is-text is-small" type="button" onClick={() => showForm('otp-login')}>
-                    <span className="icon"><i className="fas fa-key"></i></span>
-                    <span>Login with One-Time Password</span>
-                  </button>
-                </div>
-                
-                <p className="form-note mt-4">
-                  Don't have an account? <a href="#" onClick={() => showForm('register')}>Register here</a>
-                </p>
-              </form>
-            </div>
-          )}
+                      <div className="field">
+                        <label className="label">Email</label>
+                        <div className="control has-icons-left">
+                          <input className="input" type="email" name="email" placeholder="Enter your email" required />
+                          <span className="icon is-small is-left field-icon">
+                            <i className="fas fa-envelope"></i>
+                          </span>
+                        </div>
+                      </div>
 
-          {/* Register Form */}
-          {activeForm === 'register' && (
-            <div className="form-card p-5">
-              <h2 className="title is-4 has-text-centered">Create an Account</h2>
-              <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Join our secure file sharing platform</p>
-              
-              <form onSubmit={handleRegister}>
-                <div className="field">
-                  <label className="label">Username</label>
-                  <div className="control has-icons-left">
-                    <input className="input" type="text" name="username" placeholder="Choose a username" required />
-                    <span className="icon is-small is-left field-icon">
-                      <i className="fas fa-user"></i>
-                    </span>
-                  </div>
-                </div>
+                      <div className="field">
+                        <label className="label">Password</label>
+                        <div className="control has-icons-left">
+                          <input className="input" type="password" name="password" placeholder="Create a strong password" required />
+                          <span className="icon is-small is-left field-icon">
+                            <i className="fas fa-lock"></i>
+                          </span>
+                        </div>
+                        <p className="help is-size-7">Password must be at least 8 characters</p>
+                      </div>
 
-                <div className="field">
-                  <label className="label">Email</label>
-                  <div className="control has-icons-left">
-                    <input className="input" type="email" name="email" placeholder="Enter your email" required />
-                    <span className="icon is-small is-left field-icon">
-                      <i className="fas fa-envelope"></i>
-                    </span>
+                      <div className="field mt-5">
+                        <div className="control">
+                          <button className="button is-link is-fullwidth" type="submit">
+                            <span className="icon"><i className="fas fa-user-plus"></i></span>
+                            <span>Create Account</span>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <p className="form-note mt-4">
+                        Already have an account? <a href="#" onClick={() => showForm('login')}>Login here</a>
+                      </p>
+                    </form>
                   </div>
-                </div>
+                )}
 
-                <div className="field">
-                  <label className="label">Password</label>
-                  <div className="control has-icons-left">
-                    <input className="input" type="password" name="password" placeholder="Create a strong password" required />
-                    <span className="icon is-small is-left field-icon">
-                      <i className="fas fa-lock"></i>
-                    </span>
+                {/* OTP Login Form */}
+                {activeForm === 'otp-login' && (
+                  <div className="form-card p-5">
+                    <h2 className="title is-4 has-text-centered">Login with One-Time Password</h2>
+                    <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Enter your email to receive a code</p>
+                    
+                    {!showOtpSection ? (
+                      <form onSubmit={handleRequestOTP}>
+                        <div className="field">
+                          <label className="label">Email</label>
+                          <div className="control has-icons-left">
+                            <input className="input" type="email" name="email" placeholder="Enter your email" required />
+                            <span className="icon is-small is-left field-icon">
+                              <i className="fas fa-envelope"></i>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="field mt-4">
+                          <div className="control">
+                            <button
+                              className="button is-info is-fullwidth"
+                              type="submit"
+                              disabled={isLoading}
+                            >
+                              <span className="icon">
+                                {isLoading ? (
+                                  <i className="fas fa-spinner fa-spin"></i>
+                                ) : (
+                                  <i className="fas fa-paper-plane"></i>
+                                )}
+                              </span>
+                              <span>{isLoading ? 'Sending...' : 'Send One-Time Password'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleLoginWithOTP}>
+                        <div className="field">
+                          <label className="label">Email</label>
+                          <div className="control has-icons-left">
+                            <input className="input" type="email" value={otpEmail} readOnly />
+                            <span className="icon is-small is-left field-icon">
+                              <i className="fas fa-envelope"></i>
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="field">
+                          <label className="label">One-Time Password</label>
+                          <div className="control has-icons-left">
+                            <input
+                              className="input"
+                              type="text"
+                              name="otp"
+                              placeholder="Enter the 6-digit code"
+                              maxLength="6"
+                              required
+                            />
+                            <span className="icon is-small is-left field-icon">
+                              <i className="fas fa-key"></i>
+                            </span>
+                          </div>
+                          <p className="help">Enter the 6-digit code sent to your email</p>
+                        </div>
+
+                        <div className="field mt-4">
+                          <div className="control">
+                            <button className="button is-primary is-fullwidth" type="submit">
+                              <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
+                              <span>Login</span>
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <p className="has-text-centered mt-3">
+                          <a href="#" onClick={resetOTPForm}>
+                            <span className="icon is-small"><i className="fas fa-arrow-left"></i></span>
+                            <span>Use a different email</span>
+                          </a>
+                        </p>
+                      </form>
+                    )}
+                    
+                    <p className="form-note mt-4">
+                      <a href="#" onClick={() => showForm('login')}>Back to normal login</a>
+                    </p>
                   </div>
-                  <p className="help is-size-7">Password must be at least 8 characters</p>
-                </div>
+                )}
 
-                <div className="field mt-5">
-                  <div className="control">
-                    <button className="button is-link is-fullwidth" type="submit">
-                      <span className="icon"><i className="fas fa-user-plus"></i></span>
-                      <span>Create Account</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <p className="form-note mt-4">
-                  Already have an account? <a href="#" onClick={() => showForm('login')}>Login here</a>
-                </p>
-              </form>
-            </div>
-          )}
-
-          {/* OTP Login Form */}
-          {activeForm === 'otp-login' && (
-            <div className="form-card p-5">
-              <h2 className="title is-4 has-text-centered">Login with One-Time Password</h2>
-              <p className="subtitle is-6 has-text-centered has-text-grey mb-5">Enter your email to receive a code</p>
-              
-              {!showOtpSection ? (
-                <form onSubmit={handleRequestOTP}>
-                  <div className="field">
-                    <label className="label">Email</label>
-                    <div className="control has-icons-left">
-                      <input className="input" type="email" name="email" placeholder="Enter your email" required />
-                      <span className="icon is-small is-left field-icon">
-                        <i className="fas fa-envelope"></i>
-                      </span>
+                {/* Features Section */}
+                <div className="features mt-6">
+                  <h2 className="title is-3 has-text-centered mb-6">Why Choose FileShare?</h2>
+                  <div className="columns is-multiline">
+                    <div className="column is-4">
+                      <div className="box feature-card p-5">
+                        <div className="has-text-centered">
+                          <span className="feature-icon">
+                            <i className="fas fa-shield-alt"></i>
+                          </span>
+                          <h3 className="title is-4">Secure Storage</h3>
+                          <p className="has-text-grey">Your files are encrypted and stored safely on our servers.</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="field mt-4">
-                    <div className="control">
-                      <button
-                        className="button is-info is-fullwidth"
-                        type="submit"
-                        disabled={isLoading}
-                      >
-                        <span className="icon">
-                          {isLoading ? (
-                            <i className="fas fa-spinner fa-spin"></i>
-                          ) : (
-                            <i className="fas fa-paper-plane"></i>
-                          )}
-                        </span>
-                        <span>{isLoading ? 'Sending...' : 'Send One-Time Password'}</span>
-                      </button>
+                    <div className="column is-4">
+                      <div className="box feature-card p-5">
+                        <div className="has-text-centered">
+                          <span className="feature-icon">
+                            <i className="fas fa-bolt"></i>
+                          </span>
+                          <h3 className="title is-4">Fast Transfers</h3>
+                          <p className="has-text-grey">Upload and download files at lightning-fast speeds.</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </form>
-              ) : (
-                <form onSubmit={handleLoginWithOTP}>
-                  <div className="field">
-                    <label className="label">Email</label>
-                    <div className="control has-icons-left">
-                      <input className="input" type="email" value={otpEmail} readOnly />
-                      <span className="icon is-small is-left field-icon">
-                        <i className="fas fa-envelope"></i>
-                      </span>
+                    <div className="column is-4">
+                      <div className="box feature-card p-5">
+                        <div className="has-text-centered">
+                          <span className="feature-icon">
+                            <i className="fas fa-share-alt"></i>
+                          </span>
+                          <h3 className="title is-4">Easy Sharing</h3>
+                          <p className="has-text-grey">Share files with anyone using simple links or direct invites.</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="field">
-                    <label className="label">One-Time Password</label>
-                    <div className="control has-icons-left">
-                      <input
-                        className="input"
-                        type="text"
-                        name="otp"
-                        placeholder="Enter the 6-digit code"
-                        maxLength="6"
-                        required
-                      />
-                      <span className="icon is-small is-left field-icon">
-                        <i className="fas fa-key"></i>
-                      </span>
-                    </div>
-                    <p className="help">Enter the 6-digit code sent to your email</p>
-                  </div>
-
-                  <div className="field mt-4">
-                    <div className="control">
-                      <button className="button is-primary is-fullwidth" type="submit">
-                        <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
-                        <span>Login</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <p className="has-text-centered mt-3">
-                    <a href="#" onClick={resetOTPForm}>
-                      <span className="icon is-small"><i className="fas fa-arrow-left"></i></span>
-                      <span>Use a different email</span>
-                    </a>
-                  </p>
-                </form>
-              )}
-              
-              <p className="form-note mt-4">
-                <a href="#" onClick={() => showForm('login')}>Back to normal login</a>
-              </p>
-            </div>
-          )}
-
-          {/* Features Section */}
-          <div className="features mt-6">
-            <h2 className="title is-3 has-text-centered mb-6">Why Choose FileShare?</h2>
-            <div className="columns is-multiline">
-              <div className="column is-4">
-                <div className="box feature-card p-5">
-                  <div className="has-text-centered">
-                    <span className="feature-icon">
-                      <i className="fas fa-shield-alt"></i>
-                    </span>
-                    <h3 className="title is-4">Secure Storage</h3>
-                    <p className="has-text-grey">Your files are encrypted and stored safely on our servers.</p>
                   </div>
                 </div>
               </div>
-              <div className="column is-4">
-                <div className="box feature-card p-5">
-                  <div className="has-text-centered">
-                    <span className="feature-icon">
-                      <i className="fas fa-bolt"></i>
-                    </span>
-                    <h3 className="title is-4">Fast Transfers</h3>
-                    <p className="has-text-grey">Upload and download files at lightning-fast speeds.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="column is-4">
-                <div className="box feature-card p-5">
-                  <div className="has-text-centered">
-                    <span className="feature-icon">
-                      <i className="fas fa-share-alt"></i>
-                    </span>
-                    <h3 className="title is-4">Easy Sharing</h3>
-                    <p className="has-text-grey">Share files with anyone using simple links or direct invites.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            </section>
+          )
+        } />
+      </Routes>
 
       <footer>
         <div>
@@ -608,8 +618,12 @@ function App() {
           </div>
         </div>
       </footer>
-    </>
+    </Router>
   );
 }
 
 export default App;
+
+
+
+
