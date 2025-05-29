@@ -1,0 +1,245 @@
+.folder-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.folder-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.upload-section {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.selected-file {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.folder-contents {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.folder-contents.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.file-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.file-meta {
+  display: flex;
+  gap: 15px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.file-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.grid-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumbnail-container {
+  width: 100%;
+  height: 150px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  color: #666;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading-spinner i {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.empty-folder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+}
+
+.empty-folder i {
+  margin-bottom: 15px;
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.notification.success {
+  background: #48c774;
+  color: white;
+}
+
+.notification.error {
+  background: #f14668;
+  color: white;
+}
+
+.notification.warning {
+  background: #ffdd57;
+  color: #363636;
+}
+
+.notification .delete {
+  background: transparent;
+  border: none;
+  color: currentColor;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+}
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+}
+
+/* Progress bar */
+.progress {
+  margin-top: 10px;
+  height: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .folder-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .folder-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .file-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .file-icon {
+    margin: 0 0 10px 0;
+  }
+  
+  .file-actions {
+    margin-top: 10px;
+    justify-content: center;
+  }
+} 
