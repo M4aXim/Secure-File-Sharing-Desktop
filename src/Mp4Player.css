@@ -1,0 +1,226 @@
+.mp4-player-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 2rem;
+}
+
+.video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.mp4-player-container:hover .video-controls {
+  opacity: 1;
+}
+
+.seek-container {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.buffered-bar {
+  position: absolute;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.progress-bar {
+  position: absolute;
+  height: 100%;
+  background: #3273dc;
+  width: 0;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.control-buttons button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.control-buttons button:hover {
+  color: #3273dc;
+}
+
+.control-buttons button.active {
+  color: #3273dc;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.volume-control input[type="range"] {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.time-display {
+  color: white;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.speed-control {
+  position: relative;
+}
+
+.speed-options {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: none;
+}
+
+.speed-control:hover .speed-options {
+  display: block;
+}
+
+.speed-options button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.speed-options button.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.subtitle-control {
+  position: relative;
+}
+
+.subtitle-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0.5rem;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.subtitle-options button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.subtitle-options button.active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.keyboard-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 2rem;
+  border-radius: 8px;
+  color: white;
+  max-width: 400px;
+  width: 90%;
+}
+
+.keyboard-info h3 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.keyboard-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.keyboard-info li {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.keyboard-info kbd {
+  background: #333;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.notification.visible {
+  opacity: 1;
+} 

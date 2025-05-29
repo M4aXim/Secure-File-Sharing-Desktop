@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import "./App.css";
 import Dashboard from "./Dashboard.jsx";
 import Folder from "./Folder.jsx";
+import MediaView from './MediaView';
+import Mp4Player from './Mp4Player';
 
 function App() {
   const [activeForm, setActiveForm] = useState(null);
@@ -340,6 +342,14 @@ function App() {
         <Route
           path="/folder/:folderId"
           element={isAuthenticated ? <Folder /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/media-view"
+          element={isAuthenticated ? <MediaView /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/mp4-player"
+          element={isAuthenticated ? <Mp4Player /> : <Navigate to="/" replace />}
         />
         <Route
           path="/"
