@@ -56,19 +56,25 @@ function App() {
     notification.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     notification.style.borderRadius = "6px";
 
+    const icon = document.createElement("i");
+    icon.className = `fas ${
+      type === 'is-success' ? 'fa-check-circle' :
+      type === 'is-danger' ? 'fa-exclamation-circle' :
+      'fa-info-circle'}`;
+    icon.style.marginRight = "8px";
+    notification.appendChild(icon);
+
+    notification.appendChild(document.createTextNode(message));
+
     const closeButton = document.createElement("button");
     closeButton.className = "delete";
     closeButton.addEventListener("click", () => {
       notification.remove();
     });
-
+    closeButton.innerHTML = '<i class="fas fa-times"></i>';
     notification.appendChild(closeButton);
-    notification.appendChild(document.createTextNode(message));
-    document.body.appendChild(notification);
 
-    setTimeout(() => {
-      notification.remove();
-    }, 4000);
+    document.body.appendChild(notification);
   };
 
   const handleForgotPassword = () => {
@@ -351,6 +357,10 @@ function App() {
         <Route
           path="/mp4-player"
           element={isAuthenticated ? <Mp4Player /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/mp3"
+          element={isAuthenticated ? <MP3 /> : <Navigate to="/" replace />}
         />
         <Route
           path="/"

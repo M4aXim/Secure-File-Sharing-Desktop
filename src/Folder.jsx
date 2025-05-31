@@ -23,11 +23,14 @@ function Folder() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [cdnDirectLink, setCdnDirectLink] = useState('');
+  const [isFolderPublic, setIsFolderPublic] = useState(false);
+  const [dropZoneActive, setDropZoneActive] = useState(false);
 
   // Refs
   const fileInputRef = useRef(null);
   const tempLinkDurationRef = useRef(null);
   const tempLinkUrlRef = useRef(null);
+  const dropZoneRef = useRef(null);
 
   // Initial auth & data load
   useEffect(() => {
@@ -41,6 +44,7 @@ function Folder() {
         // 1) Check if folder is public
         const publicRes = await fetch(`${API_BASE}/is-folder-public/${folderId}`);
         const publicData = await publicRes.json();
+        setIsFolderPublic(publicData.isPublic);
         if (!publicData.isPublic) {
           if (!token) {
             navigate('/');
@@ -67,10 +71,23 @@ function Folder() {
     })();
   }, [folderId, navigate]);
 
-  // Update public/private button once owner status is known
+  // Update public/private button once owner status or public status is known
   useEffect(() => {
-    if (isOwner) updatePublicButtonText();
-  }, [isOwner]);
+    if (isOwner) {
+      updatePublicButtonText();
+    }
+  }, [isOwner, isFolderPublic]);
+
+  // Auto-hide notifications after 5 seconds
+  useEffect(() => {
+    let timeout;
+    if (notification.show) {
+      timeout = setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 5000);
+    }
+    return () => clearTimeout(timeout);
+  }, [notification]);
 
   // Helpers
   function formatFileSize(bytes) {
@@ -117,7 +134,6 @@ function Folder() {
 
   function showNotification(msg, type = 'is-success') {
     setNotification({ show: true, message: msg, type });
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 5000);
   }
 
   // Core functionality
@@ -157,9 +173,10 @@ function Folder() {
   async function downloadFile(filename) {
     const token = localStorage.getItem('jwtToken');
     try {
-      const tRes = await fetch(`${API_BASE}/generate-download-token?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const tRes = await fetch(
+        `${API_BASE}/generate-download-token?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
       if (!tRes.ok) throw new Error('No download token');
       const { token: dlToken } = await tRes.json();
       const dlRes = await fetch(`${API_BASE}/download-file?token=${dlToken}`);
@@ -167,8 +184,11 @@ function Folder() {
       const blob = await dlRes.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
       showNotification(`Downloaded ${filename}`, 'is-success');
     } catch (err) {
@@ -178,22 +198,20 @@ function Folder() {
   }
 
   function viewFile(filename) {
-    const fileExtension = filename.split('.').pop().toLowerCase();
-    if (fileExtension === 'mp4') {
-      navigate(`/mp4-player?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
-    } else {
-      navigate(`/media-view?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
-    }
+    navigate(`/media-view?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
   }
 
   async function deleteFile(filename) {
     if (!window.confirm(`Delete ${filename}?`)) return;
     const token = localStorage.getItem('jwtToken');
     try {
-      const res = await fetch(`${API_BASE}/delete-file/${encodeURIComponent(folderId)}/${encodeURIComponent(filename)}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(
+        `${API_BASE}/delete-file/${encodeURIComponent(folderId)}/${encodeURIComponent(filename)}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Delete failed');
       showNotification(data.message || 'Deleted', 'is-success');
@@ -214,28 +232,28 @@ function Folder() {
     const token = localStorage.getItem('jwtToken');
     const form = new FormData();
     form.append('file', selectedFile);
-      const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          setUploadProgress(pct);
-        }
-      });
-      xhr.onload = () => {
-        if (xhr.status === 200) {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setUploadProgress(pct);
+      }
+    });
+    xhr.onload = () => {
+      if (xhr.status === 200) {
         showNotification('Uploaded successfully', 'is-success');
-          fetchFolderContents();
-          setSelectedFile(null);
-          setUploadProgress(0);
-        } else {
-          const err = JSON.parse(xhr.responseText);
+        fetchFolderContents();
+        setSelectedFile(null);
+        setUploadProgress(0);
+      } else {
+        const err = JSON.parse(xhr.responseText);
         showNotification(err.message || 'Upload error', 'is-danger');
       }
     };
     xhr.onerror = () => showNotification('Network error', 'is-danger');
     xhr.open('POST', `${API_BASE}/upload-file/${encodeURIComponent(folderId)}`, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.send(form);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.send(form);
   }
 
   function toggleViewMode() {
@@ -253,15 +271,12 @@ function Folder() {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/zip'
         },
-        credentials: 'include'
       });
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || `Error ${res.status}`);
       }
 
-      // Get the filename from the Content-Disposition header if available
       const contentDisposition = res.headers.get('Content-Disposition');
       let filename = 'download.zip';
       if (contentDisposition) {
@@ -291,19 +306,7 @@ function Folder() {
     try {
       const res = await fetch(`${API_BASE}/is-folder-public/${folderId}`);
       const data = await res.json();
-      const btn = document.getElementById('makePublicBtn');
-      if (!btn) return;
-      if (data.isPublic) {
-        btn.innerHTML = '<span class="icon"><i class="fas fa-lock"></i></span><span>Make Private</span>';
-        btn.onclick = makePrivate;
-        btn.classList.remove('is-success');
-        btn.classList.add('is-warning');
-      } else {
-        btn.innerHTML = '<span class="icon"><i class="fas fa-globe"></i></span><span>Make Public</span>';
-        btn.onclick = makePublic;
-        btn.classList.remove('is-warning');
-        btn.classList.add('is-success');
-      }
+      setIsFolderPublic(data.isPublic);
     } catch (err) {
       console.error('Error checking public status', err);
     }
@@ -318,7 +321,7 @@ function Folder() {
       });
       if (!res.ok) throw new Error('Failed to make folder public');
       showNotification('Folder is now public', 'is-success');
-      updatePublicButtonText();
+      setIsFolderPublic(true);
     } catch (err) {
       console.error(err);
       showNotification('Failed to make folder public', 'is-danger');
@@ -334,7 +337,7 @@ function Folder() {
       });
       if (!res.ok) throw new Error('Failed to make folder private');
       showNotification('Folder is now private', 'is-success');
-      updatePublicButtonText();
+      setIsFolderPublic(false);
     } catch (err) {
       console.error(err);
       showNotification('Failed to make folder private', 'is-danger');
@@ -378,7 +381,7 @@ function Folder() {
       });
       if (!res.ok) throw new Error('Failed to generate temporary link');
       const data = await res.json();
-      tempLinkUrlRef.current.value = data.url;
+      if (tempLinkUrlRef.current) tempLinkUrlRef.current.value = data.url;
     } catch (err) {
       console.error('Error generating temporary link:', err);
       showNotification('Failed to generate temporary link', 'is-danger');
@@ -412,12 +415,14 @@ function Folder() {
       const list = friendsData.friends || [];
       setFriendsList(list);
       const map = {};
-      (permsData.friends || []).forEach(f => { map[f.username] = f.permissions; });
-      const init = {};
-      list.forEach(u => {
-        init[u] = map[u] || { download: false, upload: false, delete: false, addUsers: false };
+      (permsData.friends || []).forEach((f) => {
+        map[f.username] = f.permissions;
       });
-      setLocalPermissions(init);
+      const initPerms = {};
+      list.forEach((u) => {
+        initPerms[u] = map[u] || { download: false, upload: false, delete: false, addUsers: false };
+      });
+      setLocalPermissions(initPerms);
       setShowPermissionModal(true);
     } catch (err) {
       console.error('Error loading permissions:', err);
@@ -426,7 +431,7 @@ function Folder() {
   }
 
   function togglePermission(username, perm) {
-    setLocalPermissions(prev => ({
+    setLocalPermissions((prev) => ({
       ...prev,
       [username]: { ...prev[username], [perm]: !prev[username][perm] }
     }));
@@ -436,14 +441,17 @@ function Folder() {
     const token = localStorage.getItem('jwtToken');
     try {
       for (const user of friendsList) {
-        await fetch(`${API_BASE}/folders/${encodeURIComponent(folderId)}/friends/${encodeURIComponent(user)}/permissions`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(localPermissions[user])
-        });
+        await fetch(
+          `${API_BASE}/folders/${encodeURIComponent(folderId)}/friends/${encodeURIComponent(user)}/permissions`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(localPermissions[user])
+          }
+        );
       }
       showNotification('Permissions updated successfully', 'is-success');
       setShowPermissionModal(false);
@@ -467,15 +475,18 @@ function Folder() {
       return (
         <div key={name} className="grid-item">
           <div className="thumbnail-container">
-            {hasThumbnail
-              ? <img
-                className="thumbnail" 
-                  src={`${API_BASE}/thumbnail/${folderId}/${encodeURIComponent(name)}`}
-                  alt={name}
+            {hasThumbnail ? (
+              <img
+                className="thumbnail"
+                src={`${API_BASE}/thumbnail/${folderId}/${encodeURIComponent(name)}`}
+                alt={name}
                 loading="lazy"
               />
-              : <div className="thumbnail-placeholder"><i className={`fas ${getFileIcon(name)}`}></i></div>
-            }
+            ) : (
+              <div className="thumbnail-placeholder">
+                <i className={`fas ${getFileIcon(name)}`}></i>
+              </div>
+            )}
           </div>
           <div className="file-name">{name}</div>
           <div className="file-meta">
@@ -484,20 +495,35 @@ function Folder() {
           </div>
           <div className="file-actions">
             <button className="button is-small is-info" onClick={() => downloadFile(name)}>
-              <span className="icon"><i className="fas fa-download"></i></span>
+              <span className="icon">
+                <i className="fas fa-download"></i>
+              </span>
             </button>
             <button className="button is-small is-primary" onClick={() => viewFile(name)}>
-              <span className="icon"><i className="fas fa-eye"></i></span>
+              <span className="icon">
+                <i className="fas fa-eye"></i>
+              </span>
             </button>
             <button className="button is-small is-warning" onClick={() => showCdnModalHandler(name)}>
-              <span className="icon"><i className="fas fa-link"></i></span><span>CDN</span>
+              <span className="icon">
+                <i className="fas fa-link"></i>
+              </span>
+              <span>CDN</span>
             </button>
             <button className="button is-small is-danger" onClick={() => deleteFile(name)}>
-              <span className="icon"><i className="fas fa-trash-alt"></i></span>
+              <span className="icon">
+                <i className="fas fa-trash-alt"></i>
+              </span>
             </button>
             {isOwner && (
-              <button className="button is-small is-warning" onClick={() => openTempLinkModal(name)}>
-                <span className="icon"><i className="fas fa-link"></i></span>
+              <button
+                className="button is-small is-warning"
+                onClick={() => openTempLinkModal(name)}
+                title="Generate temporary link"
+              >
+                <span className="icon">
+                  <i className="fas fa-link"></i>
+                </span>
               </button>
             )}
           </div>
@@ -508,15 +534,16 @@ function Folder() {
     return (
       <div key={name} className="file-item">
         <div className="file-icon">
-          {hasThumbnail
-            ? <img
-              className="thumbnail" 
-                src={`${API_BASE}/thumbnail/${folderId}/${encodeURIComponent(name)}`}
-                alt={name}
+          {hasThumbnail ? (
+            <img
+              className="thumbnail"
+              src={`${API_BASE}/thumbnail/${folderId}/${encodeURIComponent(name)}`}
+              alt={name}
               style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
             />
-            : <i className={`fas ${getFileIcon(name)}`}></i>
-          }
+          ) : (
+            <i className={`fas ${getFileIcon(name)}`}></i>
+          )}
         </div>
         <div className="file-info">
           <span className="file-name">{name}</span>
@@ -527,20 +554,35 @@ function Folder() {
         </div>
         <div className="file-actions">
           <button className="button is-small is-info" onClick={() => downloadFile(name)}>
-            <span className="icon"><i className="fas fa-download"></i></span>
+            <span className="icon">
+              <i className="fas fa-download"></i>
+            </span>
           </button>
           <button className="button is-small is-primary" onClick={() => viewFile(name)}>
-            <span className="icon"><i className="fas fa-eye"></i></span>
+            <span className="icon">
+              <i className="fas fa-eye"></i>
+            </span>
           </button>
           <button className="button is-small is-warning" onClick={() => showCdnModalHandler(name)}>
-            <span className="icon"><i className="fas fa-link"></i></span><span>CDN</span>
+            <span className="icon">
+              <i className="fas fa-link"></i>
+            </span>
+            <span>CDN</span>
           </button>
           <button className="button is-small is-danger" onClick={() => deleteFile(name)}>
-            <span className="icon"><i className="fas fa-trash-alt"></i></span>
+            <span className="icon">
+              <i className="fas fa-trash-alt"></i>
+            </span>
           </button>
           {isOwner && (
-            <button className="button is-small is-warning" onClick={() => openTempLinkModal(name)}>
-              <span className="icon"><i className="fas fa-link"></i></span>
+            <button
+              className="button is-small is-warning"
+              onClick={() => openTempLinkModal(name)}
+              title="Generate temporary link"
+            >
+              <span className="icon">
+                <i className="fas fa-link"></i>
+              </span>
             </button>
           )}
         </div>
@@ -548,33 +590,118 @@ function Folder() {
     );
   }
 
+  // Add Friend functionality
+  async function addFriend() {
+    const friendEmail = prompt('Enter the email of the user you want to invite:');
+    if (!friendEmail) return;
+    const token = localStorage.getItem('jwtToken');
+    try {
+      const res = await fetch(`${API_BASE}/add-friend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ friendEmail, folderId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotification(data.message || 'Invitation sent!', 'is-success');
+      } else {
+        showNotification(data.message || 'Failed to send invitation', 'is-danger');
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Error sending invitation.', 'is-danger');
+    }
+  }
+
+  // Refresh folder contents
+  function refreshContents() {
+    fetchFolderContents();
+  }
+
+  // Drag & Drop handlers
+  function handleDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropZoneActive(true);
+  }
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropZoneActive(true);
+  }
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropZoneActive(false);
+  }
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropZoneActive(false);
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      setSelectedFile(files[0]);
+    }
+  }
+
   return (
-    <div className="folder-container">
+    <div
+      className={`folder-container${dropZoneActive ? ' drop-zone-active' : ''}`}
+      ref={dropZoneRef}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Header */}
       <div className="folder-header">
         <h1>Folder Contents</h1>
+        <span className="folder-id-display">Folder ID: {folderId}</span>
         <div className="folder-actions">
           <button className="button" onClick={toggleViewMode}>
-            <span className="icon"><i className={`fas ${isGridView ? 'fa-list' : 'fa-th-large'}`}></i></span>
+            <span className="icon">
+              <i className={`fas ${isGridView ? 'fa-list' : 'fa-th-large'}`}></i>
+            </span>
             <span>{isGridView ? 'List View' : 'Grid View'}</span>
+          </button>
+          <button className="button is-info" onClick={refreshContents}>
+            <span className="icon">
+              <i className="fas fa-sync-alt"></i>
+            </span>
+            <span>Refresh</span>
           </button>
           {isOwner && (
             <>
               <button className="button is-info" onClick={openPermissionModalHandler}>
-                <span className="icon"><i className="fas fa-users"></i></span>
+                <span className="icon">
+                  <i className="fas fa-users"></i>
+                </span>
                 <span>Manage Permissions</span>
               </button>
               <button
                 id="makePublicBtn"
-                className="button is-success"
-                onClick={makePublic}
+                className={`button ${isFolderPublic ? 'is-warning' : 'is-success'}`}
+                onClick={isFolderPublic ? makePrivate : makePublic}
               >
-                <span className="icon"><i className="fas fa-globe"></i></span>
-                <span>Make Public</span>
+                <span className="icon">
+                  <i className={`fas ${isFolderPublic ? 'fa-lock' : 'fa-globe'}`}></i>
+                </span>
+                <span>{isFolderPublic ? 'Make Private' : 'Make Public'}</span>
               </button>
-              <button className="button is-warning" onClick={exportAsZip}>
-                <span className="icon"><i className="fas fa-file-archive"></i></span>
+              <button className="button is-warning" onClick={exportAsZip} disabled="true">
+                <span className="icon">
+                  <i className="fas fa-file-archive"></i>
+                </span>
                 <span>Export ZIP</span>
+              </button>
+              <button className="button is-primary" onClick={addFriend}>
+                <span className="icon">
+                  <i className="fas fa-user-plus"></i>
+                </span>
+                <span>Add Friend</span>
               </button>
             </>
           )}
@@ -601,14 +728,18 @@ function Folder() {
           onChange={handleFileSelect}
         />
         <button className="button is-primary" onClick={() => fileInputRef.current.click()}>
-          <span className="icon"><i className="fas fa-upload"></i></span>
+          <span className="icon">
+            <i className="fas fa-upload"></i>
+          </span>
           <span>Select File</span>
         </button>
         {selectedFile && (
           <div className="selected-file">
             <span>{selectedFile.name}</span>
             <button className="button is-success" onClick={handleFileUpload}>
-              <span className="icon"><i className="fas fa-upload"></i></span>
+              <span className="icon">
+                <i className="fas fa-upload"></i>
+              </span>
               <span>Upload</span>
             </button>
           </div>
@@ -635,19 +766,30 @@ function Folder() {
           </div>
         ) : (
           folderContents
-            .filter(file => file.filename.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map(renderFileItem)
+            .filter((file) => file.filename.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map((file) => renderFileItem(file))
         )}
       </div>
 
       {/* Notification */}
       {notification.show && (
         <div className={`notification ${notification.type}`}>
+          <i
+            className={`fas ${
+              notification.type === 'is-success'
+                ? 'fa-check-circle'
+                : notification.type === 'is-danger'
+                ? 'fa-exclamation-circle'
+                : 'fa-info-circle'
+            }`}
+          ></i>
+          <span className="notification-message">{notification.message}</span>
           <button
-            className="delete"
+            className="notification-close"
             onClick={() => setNotification({ show: false, message: '', type: '' })}
-          ></button>
-          {notification.message}
+          >
+            <i className="fas fa-times"></i>
+          </button>
         </div>
       )}
 
@@ -668,11 +810,15 @@ function Folder() {
               <table className="table is-fullwidth">
                 <thead>
                   <tr>
-                    <th>Friend</th><th>Download</th><th>Upload</th><th>Delete</th><th>Add Users</th>
+                    <th>Friend</th>
+                    <th>Download</th>
+                    <th>Upload</th>
+                    <th>Delete</th>
+                    <th>Add Users</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {friendsList.map(user => (
+                  {friendsList.map((user) => (
                     <tr key={user}>
                       <td>{user}</td>
                       <td>
@@ -738,7 +884,9 @@ function Folder() {
               ></button>
             </header>
             <section className="modal-card-body">
-              <p><strong>Filename:</strong> {currentTempLinkFilename}</p>
+              <p>
+                <strong>Filename:</strong> {currentTempLinkFilename}
+              </p>
               <div className="field">
                 <label className="label">Hours</label>
                 <div className="control">
@@ -821,4 +969,4 @@ function Folder() {
   );
 }
 
-export default Folder; 
+export default Folder;

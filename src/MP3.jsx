@@ -161,9 +161,6 @@ function MP3() {
 
   const showNotification = (message) => {
     setNotification({ message, visible: true });
-    setTimeout(() => {
-      setNotification({ message: '', visible: false });
-    }, 3000);
   };
 
   if (error) {
@@ -330,6 +327,9 @@ function MP3() {
         <div className="notification-overlay">
           <div className="notification-message">
             {notification.message}
+            <button className="notification-close" onClick={() => setNotification({ message: '', visible: false })}>
+              <i className="fas fa-times"></i>
+            </button>
           </div>
         </div>
       )}

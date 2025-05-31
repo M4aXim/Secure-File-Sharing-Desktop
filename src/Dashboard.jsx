@@ -155,9 +155,6 @@ function Dashboard() {
 
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
-    }, 5000);
   };
 
   const handleCreateFolder = async () => {

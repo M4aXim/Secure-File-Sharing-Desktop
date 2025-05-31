@@ -216,7 +216,6 @@ function Mp4Player() {
 
   const showNotification = (message) => {
     setNotification({ message, visible: true });
-    setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), 2000);
   };
 
   const formatTime = (seconds) => {
@@ -415,6 +414,9 @@ function Mp4Player() {
 
       <div className={`notification ${notification.visible ? 'visible' : ''}`}>
         {notification.message}
+        <button className="notification-close" onClick={() => setNotification({ message: '', visible: false })}>
+          <i className="fas fa-times"></i>
+        </button>
       </div>
     </div>
   );
