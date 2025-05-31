@@ -6,6 +6,7 @@ import Dashboard from "./Dashboard.jsx";
 import Folder from "./Folder.jsx";
 import MediaView from './MediaView';
 import Mp4Player from './Mp4Player';
+import MP3 from './MP3';
 
 function App() {
   const [activeForm, setActiveForm] = useState(null);

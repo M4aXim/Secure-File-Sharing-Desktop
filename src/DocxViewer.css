@@ -1,0 +1,52 @@
+.docx-viewer {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 2rem;
+  background: white;
+}
+
+.docx-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.docx-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.docx-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.docx-content table td,
+.docx-content table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.docx-content table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.docx-viewer-loading,
+.docx-viewer-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: #666;
+}
+
+.docx-viewer-error {
+  color: #dc3545;
+} 

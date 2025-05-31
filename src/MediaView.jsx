@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import DocxViewer from './DocxViewer';
 import './MediaView.css';
 
 function MediaView() {
@@ -19,9 +20,22 @@ function MediaView() {
 
     const fileExtension = filename.split('.').pop().toLowerCase();
     
+    // Handle DOCX files in the current component
+    if (fileExtension === 'docx') {
+      document.title = `Viewing: ${decodeURIComponent(filename)}`;
+      checkFileAccess();
+      return;
+    }
+
     // Redirect MP4 files to the dedicated player
     if (fileExtension === 'mp4') {
       navigate(`/mp4-player?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
+      return;
+    }
+
+    // Redirect MP3 files to the dedicated player
+    if (fileExtension === 'mp3') {
+      navigate(`/mp3?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
       return;
     }
 
@@ -110,6 +124,9 @@ function MediaView() {
     );
   }
 
+  const fileExtension = filename.split('.').pop().toLowerCase();
+  const isDocx = fileExtension === 'docx';
+
   return (
     <div className="media-view-container">
       <div className="media-view-header">
@@ -126,14 +143,23 @@ function MediaView() {
         </div>
       </div>
       <div className="media-view-content">
-        <iframe
-          src={`${API_BASE}/view-file/${folderId}/${encodeURIComponent(filename)}`}
-          title={filename}
-          className="media-view-iframe"
-        />
+        {isDocx ? (
+          <DocxViewer
+            folderId={folderId}
+            filename={filename}
+            apiBase={API_BASE}
+          />
+        ) : (
+          <iframe
+            src={`${API_BASE}/view-file/${folderId}/${encodeURIComponent(filename)}`}
+            title={filename}
+            className="media-view-iframe"
+          />
+        )}
       </div>
     </div>
   );
 }
 
 export default MediaView; 
+

@@ -15,7 +15,6 @@ function Mp4Player() {
   const bufferedBarRef = useRef(null);
   const seekContainerRef = useRef(null);
   const notificationAreaRef = useRef(null);
-  const subtitleMenuRef = useRef(null);
   const keyboardInfoRef = useRef(null);
   
   // State
@@ -29,10 +28,7 @@ function Mp4Player() {
   const [playbackRate, setPlaybackRate] = useState(parseFloat(localStorage.getItem('mp4viewer_speed')) || 1);
   const [isPipActive, setIsPipActive] = useState(false);
   const [isLoopActive, setIsLoopActive] = useState(false);
-  const [isSubtitleMenuOpen, setIsSubtitleMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [activeSubtitleTrack, setActiveSubtitleTrack] = useState(null);
-  const [subtitles, setSubtitles] = useState([]);
   const [notification, setNotification] = useState({ message: '', visible: false });
 
   useEffect(() => {
@@ -88,69 +84,11 @@ function Mp4Player() {
       
       if (videoRef.current) {
         videoRef.current.src = url;
-        tryLoadMatchingSubtitles();
         storeVideoBlob(blob, `${folderId}_${filename}`);
       }
     } catch (err) {
       console.error('Error loading video:', err);
       showNotification('Failed to load video');
-    }
-  };
-
-  const tryLoadMatchingSubtitles = async () => {
-    const baseFilename = decodeURIComponent(filename).replace(/\.[^/.]+$/, '');
-    const srtFile = `${baseFilename}.srt`;
-    const vttFile = `${baseFilename}.vtt`;
-    
-    try {
-      const token = localStorage.getItem('jwtToken');
-      const response = await fetch(
-        `https://hackclub.maksimmalbasa.in.rs/api/view-file/${folderId}/${encodeURIComponent(srtFile)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (response.ok) {
-        const subtitleBlob = await response.blob();
-        addSubtitleTrack(subtitleBlob, 'Auto-detected SRT', 'en');
-        showNotification('Subtitles automatically loaded');
-        return;
-      }
-      
-      // Try VTT if SRT failed
-      const vttResponse = await fetch(
-        `https://hackclub.maksimmalbasa.in.rs/api/view-file/${folderId}/${encodeURIComponent(vttFile)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (vttResponse.ok) {
-        const subtitleBlob = await vttResponse.blob();
-        addSubtitleTrack(subtitleBlob, 'Auto-detected VTT', 'en');
-        showNotification('Subtitles automatically loaded');
-      }
-    } catch (err) {
-      console.log('No matching subtitle files found');
-    }
-  };
-
-  const addSubtitleTrack = (blob, label, language) => {
-    const url = URL.createObjectURL(blob);
-    const track = document.createElement('track');
-    track.kind = 'subtitles';
-    track.label = label;
-    track.srclang = language;
-    track.src = url;
-    
-    if (videoRef.current) {
-      videoRef.current.appendChild(track);
-      setSubtitles(prev => [...prev, { label, language }]);
     }
   };
 
@@ -276,30 +214,6 @@ function Mp4Player() {
     }
   };
 
-  const handleSubtitleChange = (label) => {
-    if (videoRef.current) {
-      // Disable all tracks first
-      for (const track of videoRef.current.textTracks) {
-        track.mode = 'disabled';
-      }
-      
-      // Enable selected track if not 'none'
-      if (label !== 'none') {
-        const selectedTrack = Array.from(videoRef.current.textTracks).find(track => track.label === label);
-        if (selectedTrack) {
-          selectedTrack.mode = 'showing';
-          setActiveSubtitleTrack(selectedTrack);
-          showNotification(`Subtitles: ${label}`);
-        }
-      } else {
-        setActiveSubtitleTrack(null);
-        showNotification('Subtitles disabled');
-      }
-      
-      localStorage.setItem('mp4viewer_subtitle', label);
-    }
-  };
-
   const showNotification = (message) => {
     setNotification({ message, visible: true });
     setTimeout(() => setNotification(prev => ({ ...prev, visible: false })), 2000);
@@ -369,10 +283,6 @@ function Mp4Player() {
         case '?':
           setIsHelpOpen(prev => !prev);
           break;
-        case 's':
-        case 'S':
-          handleSubtitleChange(activeSubtitleTrack ? 'none' : subtitles[0]?.label);
-          break;
         default:
           if (!isNaN(e.key) && e.key >= '1' && e.key <= '9') {
             if (videoRef.current) {
@@ -385,7 +295,7 @@ function Mp4Player() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activeSubtitleTrack, subtitles]);
+  }, []);
 
   return (
     <div className="mp4-player-container" ref={mainPlayerContainerRef}>
@@ -482,28 +392,6 @@ function Mp4Player() {
           <button onClick={() => setIsLoopActive(!isLoopActive)} className={isLoopActive ? 'active' : ''}>
             <i className="fas fa-redo"></i>
           </button>
-
-          <div className="subtitle-control">
-            <button onClick={() => setIsSubtitleMenuOpen(prev => !prev)}>
-              <i className="fas fa-closed-captioning"></i>
-            </button>
-            {isSubtitleMenuOpen && (
-              <div className="subtitle-menu">
-                <div className="subtitle-options">
-                  <button onClick={() => handleSubtitleChange('none')}>None</button>
-                  {subtitles.map(sub => (
-                    <button
-                      key={sub.label}
-                      onClick={() => handleSubtitleChange(sub.label)}
-                      className={activeSubtitleTrack?.label === sub.label ? 'active' : ''}
-                    >
-                      {sub.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -520,7 +408,6 @@ function Mp4Player() {
             <li><kbd>F</kbd> Fullscreen</li>
             <li><kbd>P</kbd> Picture-in-Picture</li>
             <li><kbd>C</kbd> Screenshot</li>
-            <li><kbd>S</kbd> Toggle Subtitles</li>
             <li><kbd>1-9</kbd> Jump to percentage</li>
           </ul>
         </div>
