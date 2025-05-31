@@ -7,6 +7,7 @@ import Folder from "./Folder.jsx";
 import MediaView from './MediaView';
 import Mp4Player from './Mp4Player';
 import MP3 from './MP3';
+import DocxViewer from './DocxViewer';
 
 function App() {
   const [activeForm, setActiveForm] = useState(null);
@@ -361,6 +362,10 @@ function App() {
         <Route
           path="/mp3"
           element={isAuthenticated ? <MP3 /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/docx-viewer"
+          element={isAuthenticated ? <DocxViewerWrapper /> : <Navigate to="/" replace />}
         />
         <Route
           path="/"
@@ -819,6 +824,13 @@ function App() {
       </Routes>
     </Router>
   );
+}
+
+function DocxViewerWrapper() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const folderId = searchParams.get('folderID');
+  const filename = searchParams.get('filename');
+  return <DocxViewer folderId={folderId} filename={filename} apiBase={"https://hackclub.maksimmalbasa.in.rs/api"} />;
 }
 
 export default App;

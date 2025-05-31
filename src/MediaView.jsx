@@ -24,6 +24,7 @@ function MediaView() {
     if (fileExtension === 'docx') {
       document.title = `Viewing: ${decodeURIComponent(filename)}`;
       checkFileAccess();
+      navigate(`/docx-viewer?folderID=${encodeURIComponent(folderId)}&filename=${encodeURIComponent(filename)}`);
       return;
     }
 

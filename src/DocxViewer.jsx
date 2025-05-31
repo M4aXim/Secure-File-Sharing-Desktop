@@ -12,11 +12,10 @@ function DocxViewer({ folderId, filename, apiBase }) {
       try {
         const token = localStorage.getItem('jwtToken');
         const response = await fetch(
-          `${apiBase}/download-file/${folderId}/${encodeURIComponent(filename)}`,
+          `${apiBase}/view-file/${encodeURIComponent(folderId)}/${encodeURIComponent(filename)}`,
           {
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              'Authorization': `Bearer ${token}`
             }
           }
         );
