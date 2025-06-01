@@ -305,15 +305,14 @@ function Dashboard() {
             className={`nav-item ${activeSection === 'shared' ? 'active' : ''}`} 
             onClick={() => setActiveSection('shared')}
           >
-            <span className="icon"><i className="fas fa-user-friends"></i></span>
-            <span>Shared with me</span>
+            {/* <span className="icon"><i className="fas fa-user-friends"></i></span>
+            <span>Shared with me</span> */}
           </div>
-          <div className="nav-item" onClick={() => window.location.href = '/dashboard/groups.html'}>
+          <div className="nav-item" onClick={() => navigate('/group')}>
             <span className="icon"><i className="fas fa-users"></i></span>
             <span>Group Management</span>
           </div>
-        </div>
-        
+        </div>        
         <div className="nav-section">
           <div className="nav-item" onClick={() => setShowApiKeyModal(true)}>
             <span className="icon"><i className="fas fa-key"></i></span>
@@ -353,7 +352,7 @@ function Dashboard() {
           <h1 className="page-title">
             {activeSection === 'home' ? 'Home' : 
              activeSection === 'myDrive' ? 'My Folders' : 
-             activeSection === 'shared' ? 'Shared with me' : 'Dashboard'}
+             activeSection === 'group' ? 'Group Management' : ''}
           </h1>
           <div className="search-bar" style={{ display: activeSection === 'home' ? 'block' : 'none' }}>
             <i className="fas fa-search"></i>

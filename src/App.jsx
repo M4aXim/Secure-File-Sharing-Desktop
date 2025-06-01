@@ -8,6 +8,7 @@ import MediaView from './MediaView';
 import Mp4Player from './Mp4Player';
 import MP3 from './MP3';
 import DocxViewer from './DocxViewer';
+import Group from './Group';
 
 function App() {
   const [activeForm, setActiveForm] = useState(null);
@@ -366,6 +367,10 @@ function App() {
         <Route
           path="/docx-viewer"
           element={isAuthenticated ? <DocxViewerWrapper /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/group"
+          element={isAuthenticated ? <Group /> : <Navigate to="/" replace />}
         />
         <Route
           path="/"

@@ -1,9 +1,9 @@
 [package]
-name = "tauri-app"
+name = "Secure_File_Sharing"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+description = "Secure File Sharing"
+authors = ["M4aXim"]
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
