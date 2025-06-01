@@ -9,7 +9,7 @@ import Mp4Player from './Mp4Player';
 import MP3 from './MP3';
 import DocxViewer from './DocxViewer';
 import Group from './Group';
-
+import Hello from './Hello';
 function App() {
   const [activeForm, setActiveForm] = useState(null);
   const [showOtpSection, setShowOtpSection] = useState(false);
@@ -371,6 +371,10 @@ function App() {
         <Route
           path="/group"
           element={isAuthenticated ? <Group /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/Hello"
+          element={<Hello />}
         />
         <Route
           path="/"

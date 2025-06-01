@@ -267,9 +267,9 @@ function Folder() {
     showNotification('Preparing ZIP file for download...', 'is-info');
     try {
       const res = await fetch(`${API_BASE}/export-as-zip/${folderId}`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/zip'
+        credentials: 'include',
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
       if (!res.ok) {
@@ -691,7 +691,7 @@ function Folder() {
                 </span>
                 <span>{isFolderPublic ? 'Make Private' : 'Make Public'}</span>
               </button>
-              <button className="button is-warning" onClick={exportAsZip} disabled="true">
+              <button className="button is-warning" onClick={exportAsZip} disabled="">
                 <span className="icon">
                   <i className="fas fa-file-archive"></i>
                 </span>

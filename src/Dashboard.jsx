@@ -322,7 +322,7 @@ function Dashboard() {
         
         <div className="nav-section">
           <div className="nav-section-title">Staff</div>
-          <div className="nav-item" id="staffNav" style={{ display: 'none' }} onClick={() => window.location.href = '/dashboard/staff.html'}>
+          <div className="nav-item" id="staffNav" style={{ display: 'none' }} onClick={() => navigate('/hello')}>
             <span className="icon"><i className="fas fa-user-shield"></i></span>
             <span>Staff Dashboard</span>
           </div>
