@@ -1,5 +1,5 @@
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font-family);
     margin: 0;
     padding: 2rem;
     background: #f5f5f5;
