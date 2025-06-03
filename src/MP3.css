@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-family);
 }
 
 .back-button {

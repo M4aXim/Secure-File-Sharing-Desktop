@@ -3,11 +3,13 @@
   --secondary-color: #34A853;
   --accent-color: #EA4335;
   --light-gray: #F5F5F5;
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
+  font-family: var(--font-family);
   display: flex;
   flex-direction: column;
 }
